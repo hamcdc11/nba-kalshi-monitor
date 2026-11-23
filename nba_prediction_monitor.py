@@ -161,6 +161,7 @@ def run_monitor() -> None:
 
     rankings = get_league_rankings()
     notified_matchups = set()
+    seen_above_threshold = set()  # Track matchups observed > 50c first to avoid duplicate alerts on shift handover
 
     while True:
         # Exit cleanly before reaching GitHub's 6-hour hard timeout
@@ -212,7 +213,11 @@ def run_monitor() -> None:
                             ask = m_data["yes_ask"]
                             bid = m_data["yes_bid"]
 
-                            if 0 < ask <= MAX_ASK_CENTS:
+                            # Record that this favorite was seen above 50c first
+                            if ask > MAX_ASK_CENTS:
+                                seen_above_threshold.add(match_key)
+                            # Trigger alert only when crossing down from >50c to <=50c
+                            elif 0 < ask <= MAX_ASK_CENTS and match_key in seen_above_threshold:
                                 title = f"NBA Dip Alert: {strong} (#{t['strong_rank']}) at {ask}c"
                                 body = (
                                     f"Score: {g['score']} | Q{g['period']} {g['clock']}\n"
