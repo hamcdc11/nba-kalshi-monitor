@@ -1,0 +1,31 @@
+name: NBA Kalshi Live Monitor
+
+on:
+  schedule:
+    # Runs daily at 16:00 PST (00:00 UTC) for weekday evening slates
+    - cron: '0 0 * * *'
+    # Runs on Saturdays & Sundays at 12:00 PST (20:00 UTC) to catch weekend matinee games
+    - cron: '0 20 * * 0,6'
+  workflow_dispatch:  # Allows manual trigger anytime from the Actions tab
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345  # 5h 45m safety cap (below GitHub's 6h hard limit)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pytz
+
+      - name: Run NBA Kalshi Monitor
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: python nba_prediction_monitor.py
